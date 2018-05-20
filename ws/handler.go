@@ -37,12 +37,10 @@ func NewHandlerFunc(m middleware.Middleware) http.HandlerFunc {
 
 				w.Reset(conn, state, header.OpCode)
 
-				bufw := new(bytes.Buffer)
-				bufr := new(bytes.Buffer)
-
-				bufr.ReadFrom(r)
-				m.Handle(bufw, bufr)
-				io.Copy(w, bufw)
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(r)
+				m.Handle(buf)
+				io.Copy(w, buf)
 
 				if err = w.Flush(); err != nil {
 					break

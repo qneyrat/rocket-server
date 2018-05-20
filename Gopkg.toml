@@ -1,0 +1,11 @@
+[[constraint]]
+  branch = "master"
+  name = "github.com/gobwas/ws"
+
+[[override]]
+  branch = "master"
+  name = "github.com/gobwas/pool"
+
+[prune]
+  go-tests = true
+  unused-packages = true

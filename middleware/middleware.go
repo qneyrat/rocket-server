@@ -6,12 +6,12 @@ import (
 )
 
 type Middleware interface {
-	Handle(*bytes.Buffer, *bytes.Buffer)
+	Handle(*bytes.Buffer)
 }
 
 type ResetMiddleware struct {}
 
-func (ResetMiddleware) Handle(buf *bytes.Buffer, r *bytes.Buffer)  {
+func (ResetMiddleware) Handle(buf *bytes.Buffer)  {
 	fmt.Println(buf.String())
 	buf.Reset()
 	buf.Write([]byte(`{}`))

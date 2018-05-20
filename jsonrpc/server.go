@@ -51,36 +51,36 @@ func (s *Server) getMethod(name string) (Method, error) {
 	return e, nil
 }
 
-func (s *Server) Handle(w *bytes.Buffer, r *bytes.Buffer) {
+func (s *Server) Handle(buf *bytes.Buffer) {
 	var j Request
-	if r == nil {
+	if buf == nil {
 		return
 	}
-	err := json.NewDecoder(r).Decode(&j)
+	err := json.NewDecoder(buf).Decode(&j)
+	buf.Reset()
 	if err != nil {
-		WriteError(w, err)
+		WriteError(buf, err)
 		return
 	}
-
 	e, err := s.getMethod(j.Method)
 	if err != nil {
-		WriteError(w, err)
+		WriteError(buf, err)
 		return
 	}
 	res := e(j)
 	b, err := json.Marshal(res)
 	if err != nil {
-		WriteError(w, err)
+		WriteError(buf, err)
 		return
 	}
-	_, err = w.Write(b)
+	_, err = buf.Write(b)
 	if err != nil {
-		WriteError(w, err)
+		WriteError(buf, err)
 		return
 	}
 
 	if s.next != nil {
-		s.next.Handle(w, r)
+		s.next.Handle(buf)
 	}
 }
 
