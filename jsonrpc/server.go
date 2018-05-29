@@ -33,7 +33,7 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) AddMiddleware(next middleware.Middleware) {
+func (s *Server) AddNext(next middleware.Middleware) {
 	s.next = next
 }
 
@@ -52,6 +52,7 @@ func (s *Server) getMethod(name string) (Method, error) {
 }
 
 func (s *Server) Handle(buf *bytes.Buffer) {
+	fmt.Println(buf.String())
 	var j Request
 	if buf == nil {
 		return

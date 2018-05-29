@@ -7,6 +7,7 @@ import (
 
 type Middleware interface {
 	Handle(*bytes.Buffer)
+	AddNext(Middleware)
 }
 
 type ResetMiddleware struct {}
@@ -16,3 +17,5 @@ func (ResetMiddleware) Handle(buf *bytes.Buffer)  {
 	buf.Reset()
 	buf.Write([]byte(`{}`))
 }
+
+func (ResetMiddleware) AddNext(m Middleware) {}
