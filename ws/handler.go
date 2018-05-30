@@ -2,18 +2,26 @@ package ws
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
 
 	"rocket-server/crypto"
-	"rocket-server/middleware"
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 )
 
-func NewHandlerFunc(m middleware.Middleware, c crypto.Crypto) http.HandlerFunc {
+type Handler interface {
+	Handle(r io.Reader, w io.Writer)
+}
+
+type Message struct {
+	Body string `json:"body"`
+}
+
+func NewHandlerFunc(h Handler, c crypto.Crypto) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, _, _, err := ws.UpgradeHTTP(r, w, nil)
 		if err != nil {
@@ -38,31 +46,32 @@ func NewHandlerFunc(m middleware.Middleware, c crypto.Crypto) http.HandlerFunc {
 
 				w.Reset(conn, state, header.OpCode)
 
-				var encReq []byte
-				_, err = r.Read(encReq)
-				if err != nil {
-					break
-				}
-				message, err := c.Decrypt(encReq)
+				var reqMessage Message
+				err = json.NewDecoder(r).Decode(&reqMessage)
 				if err != nil {
 					break
 				}
 
-				buf := new(bytes.Buffer)
-				buf.Write(message)
-
-				m.Handle(buf)
-
-				res := buf.Bytes()
-				encRes, err := c.Encrypt(res)
+				clearMessage, err := c.Decrypt([]byte(reqMessage.Body))
 				if err != nil {
 					break
 				}
 
-				buf.Reset()
-				buf.Write(encRes)
+				req := bytes.NewBuffer(clearMessage)
+				rw := new(bytes.Buffer)
+				h.Handle(req, rw)
 
-				io.Copy(w, buf)
+				encMessage, err := c.Encrypt(rw.Bytes())
+				if err != nil {
+					break
+				}
+
+				resMessage := Message{Body:string(encMessage)}
+				err = json.NewEncoder(w).Encode(&resMessage)
+				if err != nil {
+					break
+				}
+
 				if err = w.Flush(); err != nil {
 					break
 				}

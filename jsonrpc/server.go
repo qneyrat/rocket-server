@@ -1,12 +1,10 @@
 package jsonrpc
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	"rocket-server/middleware"
+	"io"
 )
 
 type Request struct {
@@ -22,8 +20,6 @@ type Response struct {
 }
 
 type Server struct {
-	next middleware.Middleware
-
 	methods map[string]Method
 }
 
@@ -31,10 +27,6 @@ func NewServer() *Server {
 	return &Server{
 		methods: make(map[string]Method),
 	}
-}
-
-func (s *Server) AddNext(next middleware.Middleware) {
-	s.next = next
 }
 
 type Method func(req Request) Response
@@ -51,40 +43,31 @@ func (s *Server) getMethod(name string) (Method, error) {
 	return e, nil
 }
 
-func (s *Server) Handle(buf *bytes.Buffer) {
-	fmt.Println(buf.String())
+func (s *Server) Handle(r io.Reader, w io.Writer) {
 	var j Request
-	if buf == nil {
-		return
-	}
-	err := json.NewDecoder(buf).Decode(&j)
-	buf.Reset()
+	err := json.NewDecoder(r).Decode(&j)
 	if err != nil {
-		WriteError(buf, err)
+		WriteError(w, err)
 		return
 	}
 	e, err := s.getMethod(j.Method)
 	if err != nil {
-		WriteError(buf, err)
+		WriteError(w, err)
 		return
 	}
 	res := e(j)
 	b, err := json.Marshal(res)
 	if err != nil {
-		WriteError(buf, err)
+		WriteError(w, err)
 		return
 	}
-	_, err = buf.Write(b)
+	_, err = w.Write(b)
 	if err != nil {
-		WriteError(buf, err)
+		WriteError(w, err)
 		return
-	}
-
-	if s.next != nil {
-		s.next.Handle(buf)
 	}
 }
 
-func WriteError(buf *bytes.Buffer, err error)  {
-	buf.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err)))
+func WriteError(w io.Writer, err error)  {
+	w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err)))
 }
