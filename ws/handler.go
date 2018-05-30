@@ -66,7 +66,7 @@ func NewHandlerFunc(h Handler, c crypto.Crypto) http.HandlerFunc {
 					break
 				}
 
-				resMessage := Message{Body:string(encMessage)}
+				resMessage := Message{Body: string(encMessage)}
 				err = json.NewEncoder(w).Encode(&resMessage)
 				if err != nil {
 					break
