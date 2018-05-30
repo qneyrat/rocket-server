@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"rocket-server/crypto"
 	"rocket-server/jsonrpc"
 	"rocket-server/service"
 	"rocket-server/ws"
@@ -11,5 +12,7 @@ import (
 func main() {
 	s := jsonrpc.NewServer()
 	s.AddMethod("hello", jsonrpc.NewSayHelloMethod(&service.Service{}))
-	http.ListenAndServe(":4001", ws.NewHandlerFunc(s))
+
+	c := crypto.Crypto{Key:[]byte("0123456789012345")}
+	http.ListenAndServe(":4001", ws.NewHandlerFunc(s, c))
 }

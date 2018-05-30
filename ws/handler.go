@@ -6,13 +6,14 @@ import (
 	"log"
 	"net/http"
 
+	"rocket-server/crypto"
 	"rocket-server/middleware"
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 )
 
-func NewHandlerFunc(m middleware.Middleware) http.HandlerFunc {
+func NewHandlerFunc(m middleware.Middleware, c crypto.Crypto) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, _, _, err := ws.UpgradeHTTP(r, w, nil)
 		if err != nil {
@@ -37,11 +38,31 @@ func NewHandlerFunc(m middleware.Middleware) http.HandlerFunc {
 
 				w.Reset(conn, state, header.OpCode)
 
-				buf := new(bytes.Buffer)
-				buf.ReadFrom(r)
-				m.Handle(buf)
-				io.Copy(w, buf)
+				var encReq []byte
+				_, err = r.Read(encReq)
+				if err != nil {
+					break
+				}
+				message, err := c.Decrypt(encReq)
+				if err != nil {
+					break
+				}
 
+				buf := new(bytes.Buffer)
+				buf.Write(message)
+
+				m.Handle(buf)
+
+				res := buf.Bytes()
+				encRes, err := c.Encrypt(res)
+				if err != nil {
+					break
+				}
+
+				buf.Reset()
+				buf.Write(encRes)
+
+				io.Copy(w, buf)
 				if err = w.Flush(); err != nil {
 					break
 				}
