@@ -13,7 +13,7 @@ import (
 	"github.com/gobwas/ws/wsutil"
 )
 
-type Handler interface {
+type Middleware interface {
 	Handle(r io.Reader, w io.Writer)
 }
 
@@ -21,7 +21,7 @@ type Message struct {
 	Body string `json:"body"`
 }
 
-func NewHandlerFunc(h Handler, c crypto.Crypto) http.HandlerFunc {
+func NewHandlerFunc(h Middleware, c crypto.Crypto) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, _, _, err := ws.UpgradeHTTP(r, w, nil)
 		if err != nil {
