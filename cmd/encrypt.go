@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 
-	"rocket-server/crypto"
+	"rocket-server/pkg/crypto"
 )
 
 func main() {
-	msg := `ShWqxl0gX0xqDW+Ljrs2DIH1lCGDGV+yv1QwzLJ8nDT4M9xi+re0`
+	msg := `{"method": "hello"}`
 	c := &crypto.Crypto{Key: []byte("0123456789012345")}
-	res, _ :=c.Decrypt([]byte(msg))
+	res, _ :=c.Encrypt([]byte(msg))
 	fmt.Println(string(res))
 }

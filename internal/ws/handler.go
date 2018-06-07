@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"rocket-server/crypto"
+	"rocket-server/pkg/crypto"
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
